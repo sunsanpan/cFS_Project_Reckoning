@@ -1,0 +1,197 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    BMP280 Application EDS (Electronic Data Sheet)
+    Defines all messages, commands, and telemetry for BMP280 app
+-->
+<PackageFile>
+  <Package name="BMP280_APP" shortDescription="BMP280 Sensor Application">
+    
+    <!-- Command Message IDs -->
+    <Define name="CMD_MID" value="${MISSION_NAME}/BMP280_APP/CMD"/>
+    <Define name="SEND_HK_MID" value="${MISSION_NAME}/BMP280_APP/SEND_HK"/>
+    
+    <!-- Telemetry Message IDs -->
+    <Define name="HK_TLM_MID" value="${MISSION_NAME}/BMP280_APP/HK_TLM"/>
+    <Define name="SENSOR_TLM_MID" value="${MISSION_NAME}/BMP280_APP/SENSOR_TLM"/>
+    
+    <!-- Command Codes -->
+    <Define name="NOOP_CC" value="0"/>
+    <Define name="RESET_COUNTERS_CC" value="1"/>
+    <Define name="ENABLE_CC" value="2"/>
+    <Define name="DISABLE_CC" value="3"/>
+    <Define name="LED_ON_CC" value="4"/>
+    <Define name="LED_OFF_CC" value="5"/>
+    <Define name="LED_TOGGLE_CC" value="6"/>
+    <Define name="LED_STATUS_CC" value="7"/>
+    
+    <!-- Command Structures -->
+    <DataTypeSet>
+      
+      <!-- No-op Command -->
+      <ContainerDataType name="NoopCmd" shortDescription="No-op command">
+        <ConstraintSet>
+          <ValueConstraint entry="$.CmdHeader.FunctionCode" value="${NOOP_CC}"/>
+        </ConstraintSet>
+        <EntryList>
+          <Entry name="CmdHeader" type="CFE_HDR/CommandHeader" />
+        </EntryList>
+      </ContainerDataType>
+      
+      <!-- Reset Counters Command -->
+      <ContainerDataType name="ResetCountersCmd" shortDescription="Reset counters command">
+        <ConstraintSet>
+          <ValueConstraint entry="$.CmdHeader.FunctionCode" value="${RESET_COUNTERS_CC}"/>
+        </ConstraintSet>
+        <EntryList>
+          <Entry name="CmdHeader" type="CFE_HDR/CommandHeader" />
+        </EntryList>
+      </ContainerDataType>
+      
+      <!-- Enable Sensor Command -->
+      <ContainerDataType name="EnableCmd" shortDescription="Enable sensor reading">
+        <ConstraintSet>
+          <ValueConstraint entry="$.CmdHeader.FunctionCode" value="${ENABLE_CC}"/>
+        </ConstraintSet>
+        <EntryList>
+          <Entry name="CmdHeader" type="CFE_HDR/CommandHeader" />
+        </EntryList>
+      </ContainerDataType>
+      
+      <!-- Disable Sensor Command -->
+      <ContainerDataType name="DisableCmd" shortDescription="Disable sensor reading">
+        <ConstraintSet>
+          <ValueConstraint entry="$.CmdHeader.FunctionCode" value="${DISABLE_CC}"/>
+        </ConstraintSet>
+        <EntryList>
+          <Entry name="CmdHeader" type="CFE_HDR/CommandHeader" />
+        </EntryList>
+      </ContainerDataType>
+      
+      <!-- LED On Command -->
+      <ContainerDataType name="LedOnCmd" shortDescription="Turn LED on">
+        <ConstraintSet>
+          <ValueConstraint entry="$.CmdHeader.FunctionCode" value="${LED_ON_CC}"/>
+        </ConstraintSet>
+        <EntryList>
+          <Entry name="CmdHeader" type="CFE_HDR/CommandHeader" />
+        </EntryList>
+      </ContainerDataType>
+      
+      <!-- LED Off Command -->
+      <ContainerDataType name="LedOffCmd" shortDescription="Turn LED off">
+        <ConstraintSet>
+          <ValueConstraint entry="$.CmdHeader.FunctionCode" value="${LED_OFF_CC}"/>
+        </ConstraintSet>
+        <EntryList>
+          <Entry name="CmdHeader" type="CFE_HDR/CommandHeader" />
+        </EntryList>
+      </ContainerDataType>
+      
+      <!-- LED Toggle Command -->
+      <ContainerDataType name="LedToggleCmd" shortDescription="Toggle LED state">
+        <ConstraintSet>
+          <ValueConstraint entry="$.CmdHeader.FunctionCode" value="${LED_TOGGLE_CC}"/>
+        </ConstraintSet>
+        <EntryList>
+          <Entry name="CmdHeader" type="CFE_HDR/CommandHeader" />
+        </EntryList>
+      </ContainerDataType>
+      
+      <!-- LED Status Command -->
+      <ContainerDataType name="LedStatusCmd" shortDescription="Query LED status">
+        <ConstraintSet>
+          <ValueConstraint entry="$.CmdHeader.FunctionCode" value="${LED_STATUS_CC}"/>
+        </ConstraintSet>
+        <EntryList>
+          <Entry name="CmdHeader" type="CFE_HDR/CommandHeader" />
+        </EntryList>
+      </ContainerDataType>
+      
+      <!-- Housekeeping Telemetry Payload -->
+      <ContainerDataType name="HkTlm_Payload" shortDescription="Housekeeping telemetry payload">
+        <EntryList>
+          <Entry name="CommandCounter" type="BASE_TYPES/uint8" shortDescription="Command counter"/>
+          <Entry name="CommandErrorCounter" type="BASE_TYPES/uint8" shortDescription="Command error counter"/>
+          <Entry name="SensorEnabled" type="BASE_TYPES/uint8" shortDescription="Sensor enabled flag"/>
+          <Entry name="ReadRate" type="BASE_TYPES/uint32" shortDescription="Sensor read rate in Hz"/>
+          <Entry name="LedState" type="BASE_TYPES/uint8" shortDescription="LED state (0=OFF, 1=ON)"/>
+        </EntryList>
+      </ContainerDataType>
+      
+      <!-- Housekeeping Telemetry -->
+      <ContainerDataType name="HkTlm" baseType="CFE_HDR/TelemetryHeader">
+        <ConstraintSet>
+          <ValueConstraint entry="$.TelemetryHeader.StreamId" value="${HK_TLM_MID}"/>
+        </ConstraintSet>
+        <EntryList>
+          <Entry name="Payload" type="HkTlm_Payload"/>
+        </EntryList>
+      </ContainerDataType>
+      
+      <!-- Sensor Telemetry Payload -->
+      <ContainerDataType name="SensorTlm_Payload" shortDescription="Sensor data telemetry payload">
+        <EntryList>
+          <Entry name="Temperature" type="BASE_TYPES/float" shortDescription="Temperature in Celsius"/>
+          <Entry name="Pressure" type="BASE_TYPES/float" shortDescription="Pressure in Pascals"/>
+          <Entry name="Timestamp" type="BASE_TYPES/uint32" shortDescription="Timestamp"/>
+        </EntryList>
+      </ContainerDataType>
+      
+      <!-- Sensor Telemetry -->
+      <ContainerDataType name="SensorTlm" baseType="CFE_HDR/TelemetryHeader">
+        <ConstraintSet>
+          <ValueConstraint entry="$.TelemetryHeader.StreamId" value="${SENSOR_TLM_MID}"/>
+        </ConstraintSet>
+        <EntryList>
+          <Entry name="Payload" type="SensorTlm_Payload"/>
+        </EntryList>
+      </ContainerDataType>
+      
+    </DataTypeSet>
+    
+    <!-- Command Dispatcher -->
+    <ComponentSet>
+      <Component name="Application">
+        
+        <!-- Command Interface -->
+        <RequiredInterfaceSet>
+          <Interface name="CMD" shortDescription="Command interface" type="CFE_SB/Telecommand">
+            <GenericTypeMapSet>
+              <GenericTypeMap name="TelecommandDataType" type="NoopCmd"/>
+              <GenericTypeMap name="TelecommandDataType" type="ResetCountersCmd"/>
+              <GenericTypeMap name="TelecommandDataType" type="EnableCmd"/>
+              <GenericTypeMap name="TelecommandDataType" type="DisableCmd"/>
+              <GenericTypeMap name="TelecommandDataType" type="LedOnCmd"/>
+              <GenericTypeMap name="TelecommandDataType" type="LedOffCmd"/>
+              <GenericTypeMap name="TelecommandDataType" type="LedToggleCmd"/>
+              <GenericTypeMap name="TelecommandDataType" type="LedStatusCmd"/>
+            </GenericTypeMapSet>
+          </Interface>
+          
+          <Interface name="SEND_HK" shortDescription="Send housekeeping" type="CFE_SB/Telecommand">
+            <GenericTypeMapSet>
+              <GenericTypeMap name="TelecommandDataType" type="CFE_MSG/CommandHeader"/>
+            </GenericTypeMapSet>
+          </Interface>
+        </RequiredInterfaceSet>
+        
+        <!-- Telemetry Interface -->
+        <ProvidedInterfaceSet>
+          <Interface name="HK_TLM" shortDescription="Housekeeping telemetry" type="CFE_SB/Telemetry">
+            <GenericTypeMapSet>
+              <GenericTypeMap name="TelemetryDataType" type="HkTlm"/>
+            </GenericTypeMapSet>
+          </Interface>
+          
+          <Interface name="SENSOR_TLM" shortDescription="Sensor telemetry" type="CFE_SB/Telemetry">
+            <GenericTypeMapSet>
+              <GenericTypeMap name="TelemetryDataType" type="SensorTlm"/>
+            </GenericTypeMapSet>
+          </Interface>
+        </ProvidedInterfaceSet>
+        
+      </Component>
+    </ComponentSet>
+    
+  </Package>
+</PackageFile>

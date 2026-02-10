@@ -1,0 +1,89 @@
+FSWV1 INSTALLATION - SIMPLE STEPS
+==================================
+
+STEP 1: Extract and Copy
+-------------------------
+cd $CFS_PROJECT_DIR/apps/
+tar -xzf fswv1.tar.gz
+
+
+STEP 2: Edit ONE file: targets.cmake
+-------------------------------------
+nano $CFS_PROJECT_DIR/targets.cmake
+
+Find the section with:
+  list(APPEND MISSION_GLOBAL_APPLIST sample_app)
+  list(APPEND MISSION_GLOBAL_APPLIST ci_lab)
+  list(APPEND MISSION_GLOBAL_APPLIST to_lab)
+  list(APPEND MISSION_GLOBAL_APPLIST sch_lab)
+
+ADD THIS LINE:
+  list(APPEND MISSION_GLOBAL_APPLIST fswv1)
+
+
+STEP 3: Edit startup script  
+---------------------------
+nano $CFS_PROJECT_DIR/sample_defs/cpu1_cfe_es_startup.scr
+
+Add this line before the "!" at the end:
+CFE_APP, fswv1,  FSWV1_APP_Main,  FSWV1_APP,  50,  16384,  0x0, 0;
+
+
+STEP 4: Build
+-------------
+cd $CFS_PROJECT_DIR
+make clean
+make prep
+make
+make install
+
+
+STEP 5: Run
+-----------
+cd build/exe/cpu1
+./core-cpu1
+
+
+THAT'S IT!
+==========
+
+You should see:
+- FSWV1: Sensor initialized successfully
+- FSWV1_GPIO: GPIO 17 initialized 
+- FSWV1_UART: UART initialized on /dev/ttyAMA0
+- FSWV1 App Initialized. Version 1.0.0.0
+
+
+Hardware Connections:
+====================
+
+BMP280 (I2C) - Same as before
+LED (GPIO17) - Same as before
+
+NEW - IMU (UART):
+  GPIO 14 TXD (Pin 8)  → IMU RX
+  GPIO 15 RXD (Pin 10) → IMU TX
+  GND (Pin 6)          → IMU GND
+
+
+UART Format from IMU:
+=====================
+$,Ax,Ay,Az,Gx,Gy,Gz,Temperature,#
+
+Example:
+$,0.05,-0.12,9.81,0.01,-0.02,0.00,25.5,#
+
+
+Testing:
+========
+# LED (same commands as before!)
+python3 simple_cmd.py led-on
+python3 simple_cmd.py led-off
+python3 simple_cmd.py blink
+
+# Monitor telemetry
+nc -ul 5555
+
+
+NOTE: Steps 3 and 4 from bmp280_app are NOT needed!
+Just targets.cmake and startup script.

@@ -1,0 +1,163 @@
+!
+! Startup script for cFS with FSWV1 Application
+!
+! File: cfe_es_startup.scr
+! Location: build/exe/cpu1/
+!
+! This script tells cFS which applications to load at startup
+!
+
+CFE_LIB, sample_lib,  SAMPLE_LIB_Init,      SAMPLE_LIB,        0,     0,    0x0, 0;
+CFE_APP, sample_app,  SAMPLE_APP_Main,      SAMPLE_APP,       50,  8192, 0x0, 0;
+CFE_APP, sch_lab,     SCH_LAB_AppMain,      SCH_LAB_APP,      80, 16384, 0x0, 0;
+CFE_APP, ci_lab,      CI_Lab_AppMain,       CI_LAB_APP,       70,  8192, 0x0, 0;
+CFE_APP, to_lab,      TO_Lab_AppMain,       TO_LAB_APP,       74, 16384, 0x0, 0;
+
+! FSWV1 Application - BMP280 Sensor, IMU, LED Control, Telemetry
+CFE_APP, fswv1,       FSWV1_APP_Main,       FSWV1_APP,        60, 16384, 0x0, 0;
+
+!
+! Startup Script Format:
+! ---------------------
+! Entry Type, Name, EntryPoint, SharedLibName, Priority, StackSize, LoadAddr, ExceptionAction
+!
+! CFE_LIB  = Shared Library
+! CFE_APP  = Application
+!
+! Priority: Lower number = higher priority (0-255)
+! StackSize: In bytes (typical: 8192-16384)
+! LoadAddr: 0x0 = let OS choose
+! ExceptionAction: 0 = restart app on exception
+!
+
+! =============================================================================
+! FSWV1 Application Configuration Notes
+! =============================================================================
+!
+! The FSWV1 application provides:
+!   - BMP280 temperature/pressure sensor reading (I2C)
+!   - IMU data reception via UART (/dev/ttyAMA0)
+!   - LED control via GPIO (pin 17)
+!   - Telemetry transmission via UDP (port 5555)
+!   - Telemetry transmission via UART (/dev/ttyS0 or /dev/ttyUSB0)
+!
+! Priority: 60 (medium priority, runs after critical services)
+! Stack Size: 16384 bytes (16KB - adequate for sensor operations)
+!
+! =============================================================================
+! System Requirements Before Starting cFS
+! =============================================================================
+!
+! 1. Install libgpiod:
+!    sudo apt-get install libgpiod-dev
+!
+! 2. Add user to dialout group (for UART access):
+!    sudo usermod -a -G dialout $USER
+!    (logout/login or reboot after this)
+!
+! 3. Configure UART permissions:
+!    sudo chmod 666 /dev/ttyAMA0
+!    sudo chmod 666 /dev/ttyS0
+!    (OR use udev rules for permanent permissions)
+!
+! 4. Enable additional UARTs if needed (Raspberry Pi):
+!    Add to /boot/config.txt:
+!      dtoverlay=uart1
+!    Then reboot
+!
+! 5. Check UART devices exist:
+!    ls -l /dev/ttyAMA* /dev/ttyS* /dev/ttyUSB*
+!
+! =============================================================================
+! UART Configuration in Code
+! =============================================================================
+!
+! IMU Input UART (receives IMU data):
+!   File: fswv1/fsw/src/fswv1_uart.c
+!   Line: 34
+!   Default: /dev/ttyAMA0
+!
+! Telemetry Output UART (transmits telemetry):
+!   File: fswv1/fsw/src/fswv1_uart_telemetry.c
+!   Line: 29
+!   Default: /dev/ttyS0
+!   Recommended: /dev/ttyUSB0 (to avoid pin conflict)
+!
+! =============================================================================
+! GPIO Configuration
+! =============================================================================
+!
+! LED Control GPIO:
+!   File: fswv1/fsw/inc/fswv1_app.h
+!   Line: 228
+!   Default: GPIO 17
+!
+! GPIO requires libgpiod, no special permissions needed
+!
+! =============================================================================
+! Testing After Startup
+! =============================================================================
+!
+! 1. Check app started successfully:
+!    Look for "FSWV1: Application initialized" in console output
+!
+! 2. Monitor telemetry on UDP:
+!    python3 udp_telemetry_receiver.py
+!
+! 3. Monitor telemetry on UART:
+!    screen /dev/ttyS0 115200
+!    OR
+!    python3 uart_telemetry_receiver.py
+!
+! 4. Send commands:
+!    python3 fswv1_cmd_test.py
+!
+! 5. Check housekeeping:
+!    Use TO_LAB to subscribe to telemetry messages
+!
+! =============================================================================
+! Troubleshooting
+! =============================================================================
+!
+! If FSWV1 fails to initialize:
+!
+! 1. Check event messages for specific errors:
+!    - "I2C init error" = BMP280 sensor not connected or wrong address
+!    - "UART init error" = UART device not available or no permissions
+!    - "GPIO init error" = libgpiod not installed or GPIO chip not found
+!    - "UDP init error" = Network issue (usually non-fatal)
+!
+! 2. The app will continue running even if optional components fail:
+!    - BMP280 failure = telemetry will send zeros
+!    - IMU UART failure = IMU data will be zeros
+!    - Telemetry UART failure = only UDP telemetry works
+!    - GPIO failure = LED commands won't work
+!    - UDP failure = only UART telemetry works
+!
+! 3. Common fixes:
+!    - Permissions: sudo usermod -a -G dialout $USER
+!    - I2C: sudo raspi-config -> Interface Options -> I2C -> Enable
+!    - UART: sudo raspi-config -> Interface Options -> Serial Port -> Yes
+!    - libgpiod: sudo apt-get install libgpiod-dev
+!
+! =============================================================================
+! Message IDs
+! =============================================================================
+!
+! Command Message ID:    0x1882 (use fswv1_cmd_test.py)
+! HK Telemetry MID:      0x0882
+! Combined Telemetry MID: 0x0883
+!
+! Available Commands:
+!   - NOOP (0)           - No operation, tests command path
+!   - RESET_COUNTERS (1) - Reset command counters
+!   - ENABLE (2)         - Enable sensor reading
+!   - DISABLE (3)        - Disable sensor reading
+!   - LED_ON (4)         - Turn LED on
+!   - LED_OFF (5)        - Turn LED off
+!   - LED_TOGGLE (6)     - Toggle LED state
+!   - LED_STATUS (7)     - Query LED status
+!
+! =============================================================================
+
+! End of Startup Script
